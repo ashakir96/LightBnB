@@ -9,7 +9,7 @@ const pool = new Pool({
   database: 'lightbnb'
 });
 
-/// Users
+// Users
 
 /**
  * Get a single user from the database given their email.
@@ -63,7 +63,7 @@ const addUser =  function(user) {
 }
 exports.addUser = addUser;
 
-/// Reservations
+// Reservations
 
 /**
  * Get all reservations for a single user.
@@ -85,7 +85,7 @@ const getAllReservations = function(guest_id, limit = 10) {
 }
 exports.getAllReservations = getAllReservations;
 
-/// Properties
+// Properties
 
 /**
  * Get all properties.
@@ -144,11 +144,12 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
+  const {title, description, owner_id, cover_photo_url, thumbnail_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, province, city, country, street, post_code} = property;
   return pool.query(`
-  INSERT INTO users (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, country, street, city, province, post_code)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  INSERT INTO properties (title, description, owner_id, cover_photo_url, thumbnail_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, active, province, city, country, street, post_code)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
   RETURNING *;
-  `, [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms, property.country, property.street, property.city, property.province, property.post_code])
+  `, [title, description, owner_id, cover_photo_url, thumbnail_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, true, province, city, country, street, post_code])
   .then(res => res.rows[0]);
 }
 exports.addProperty = addProperty;
