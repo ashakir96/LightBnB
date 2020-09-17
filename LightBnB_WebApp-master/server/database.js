@@ -22,7 +22,13 @@ const getUserWithEmail = function(email) {
   FROM users
   WHERE email = $1
   `, [email])
-  .then(res => res.rows[0]);
+  .then(res => {
+    if (res.rows.length === 0) {
+      return null;
+    } else {
+      return res.rows[0];
+    }
+  });
 }
 exports.getUserWithEmail = getUserWithEmail;
 
@@ -88,12 +94,46 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  return pool.query(`
-  SELECT * 
+  const queryParams = [];
+  let queryString = `
+  SELECT properties.*, AVG(property_reviews.rating)
   FROM properties
-  LIMIT $1
-  `, [limit])
-  .then(res => res.rows);
+  JOIN property_reviews ON properties.id = property_id
+  `;
+  if (options.city) {
+    queryParams.push(`%${options.city}%`);
+    queryString += `WHERE city LIKE $${queryParams.length} `;
+  }
+
+  if (options.owner_id) {
+    queryParams.push(`%${options.owner_id}%`);
+    queryString += `AND properties.owner_id LIKE $${queryParams.length} `;
+  }
+
+  if (options.minimum_price_per_night) {
+    queryParams.push(`%${options.minimum_price_per_night}%`);
+    queryString += `AND cost_per_night >= $${queryParams.length} `;
+  }
+
+  if (options.maximum_price_per_night) {
+    queryParams.push(`%${options.maximum_price_per_night}%`);
+    queryString += `AND cost_per_night <= $${queryParams.length} `;
+  }
+
+  if (options.minimum_rating) {
+    queryParams.push(`%${options.minimum_rating}%`);
+    queryString += `AND rating >= $${queryParams.length} `;
+  }
+
+  queryParams.push(limit);
+  queryString += `
+  GROUP BY properties.id
+  ORDER BY cost_per_night
+  LIMIT $${queryParams.length};
+  `;
+
+  return pool.query(queryString, queryParams)
+    .then (res => res.rows);
 }
 exports.getAllProperties = getAllProperties;
 
